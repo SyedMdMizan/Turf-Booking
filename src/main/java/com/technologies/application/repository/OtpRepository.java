@@ -6,9 +6,12 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OtpRepository extends JpaRepository<Otp, Long> {
 
     List<Otp> findByMobileNumberAndExpiryTimeAfter(String mobileNumber, LocalDateTime localDateTime);
+
+    Optional<Otp> getTopByMobileNumberOrderByIdDesc(String mobileNumber);
 }

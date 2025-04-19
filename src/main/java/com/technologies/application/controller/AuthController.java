@@ -1,6 +1,7 @@
 package com.technologies.application.controller;
 
 import com.technologies.application.dto.SendOtpResponseDto;
+import com.technologies.application.dto.VerifyOtpResponseDto;
 import com.technologies.application.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,9 +31,9 @@ public class AuthController {
         }
     }
 
-//    @PostMapping("verifyOTP")
-//    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> payload){
-//        Map<String, String> response = authService.verifyOtp(payload);
-////        return ResponseEntity<?>(response);
-//    }
+    @PostMapping("/verifyOTP")
+    public ResponseEntity<VerifyOtpResponseDto> verifyOtp(@RequestBody Map<String, String> payload){
+        VerifyOtpResponseDto response = authService.verifyOtp(payload);
+        return ResponseEntity.status(response.isSuccess() ? HttpStatus.OK : HttpStatus.BAD_REQUEST).body(response);
+    }
 }

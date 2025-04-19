@@ -1,6 +1,7 @@
 package com.technologies.application.service;
 
 import com.technologies.application.dto.SendOtpResponseDto;
+import com.technologies.application.dto.VerifyOtpResponseDto;
 import com.technologies.application.entity.Otp;
 import com.technologies.application.repository.OtpRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.List;
 
@@ -59,7 +62,48 @@ public class AuthService {
         return true;
     }
 
-//    public Map<String, String> verifyOtp(Map<String, String> payload) {
-//
-//    }
+    public VerifyOtpResponseDto verifyOtp(Map<String, String> payload) {
+        String mobileNumber = payload.get("mobile");
+        String verificationOtp = payload.get("otp");
+
+        Optional<Otp> record = otpRepository.getTopByMobileNumberOrderByIdDesc(mobileNumber);
+        if(record.isEmpty()){
+            return new VerifyOtpResponseDto(null, false, "OTP Not Found");
+        }
+        Otp otp = record.get();
+        if(otp.isVerified()){
+            return new VerifyOtpResponseDto(null, false, "OTP already used");
+        }
+        if(otp.getExpiryTime().isBefore(LocalDateTime.now())){
+            return new VerifyOtpResponseDto(null, false, "OTP expired");
+        }
+        if(otp.getAttemptCount()<3){
+            if(otp.getOtp().equals(verificationOtp)){
+                otp.setVerified(true);
+                otpRepository.save(otp);
+                String token = this.generateToken(mobileNumber);
+                return new VerifyOtpResponseDto(token, true, "OTP Verified Successfully");
+            }
+            else{
+                int attemptLeft = 2-otp.getAttemptCount();
+                otp.setAttemptCount(otp.getAttemptCount()+1);
+                otpRepository.save(otp);
+                String message = "";
+                if(attemptLeft >0){
+                    message = "Incorrect OTP! " + attemptLeft + " attempts left.";
+                }
+                else{
+                    message = "Maximum attempts reached";
+                }
+                return new VerifyOtpResponseDto(null, false, message);
+            }
+        }
+        else{
+            return new VerifyOtpResponseDto(null, false, "Maximum attempts reached");
+        }
+    }
+
+    private String generateToken(String mobileNumber) {
+        return "tokenGenerated";
+    }
 }
